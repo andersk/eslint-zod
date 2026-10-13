@@ -30,27 +30,24 @@ const eslintPluginZodCore = {
   } as unknown as Record<string, Rule.RuleModule>,
 } satisfies ESLint.Plugin as CompatiblePlugin;
 
-const baseConfig = {
+// The configs register this same object, so users can register it under the same name.
+const plugin = {
+  ...eslintPluginZodCore,
+  configs: {} as Record<'recommended', CompatibleConfig>,
+} satisfies ESLint.Plugin;
+
+plugin.configs.recommended = {
   name: `${PLUGIN_NAME}/recommended`,
   files: ['**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}'],
   plugins: {
-    'zod-core': eslintPluginZodCore,
+    'zod-core': plugin,
   },
-};
-
-const recommendedConfig = {
-  ...baseConfig,
   rules: {
     'zod-core/consistent-import': 'error',
   },
 } satisfies Linter.Config as CompatibleConfig;
 
-export default {
-  ...eslintPluginZodCore,
-  configs: {
-    recommended: recommendedConfig,
-  },
-} satisfies ESLint.Plugin;
+export default plugin;
 /**
  * why `satisfies`?
  * @see https://github.com/marcalexiei/eslint-zod/issues/49

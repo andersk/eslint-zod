@@ -80,12 +80,18 @@ const eslintPluginZodMini = {
   } as unknown as Record<string, Rule.RuleModule>,
 } satisfies ESLint.Plugin as CompatiblePlugin;
 
+// The configs register this same object, so users can register it under the same name.
+const plugin = {
+  ...eslintPluginZodMini,
+  configs: {} as Record<'recommended' | 'strict' | 'stylistic' | 'all', CompatibleConfig>,
+} satisfies ESLint.Plugin;
+
 function createConfig(name: string, rules: Linter.RulesRecord): CompatibleConfig {
   return {
     name: `${PLUGIN_NAME}/${name}`,
     files: ['**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}'],
     plugins: {
-      'zod-mini': eslintPluginZodMini,
+      'zod-mini': plugin,
     },
     rules,
   } satisfies Linter.Config as CompatibleConfig;
@@ -130,15 +136,14 @@ const stylisticRules = {
   'zod-mini/schema-error-property-style': 'error',
 } satisfies Linter.RulesRecord;
 
-export default {
-  ...eslintPluginZodMini,
-  configs: {
-    recommended: createConfig('recommended', recommendedRules),
-    strict: createConfig('strict', strictRules),
-    stylistic: createConfig('stylistic', stylisticRules),
-    all: createConfig('all', { ...strictRules, ...stylisticRules }),
-  },
-} satisfies ESLint.Plugin;
+Object.assign(plugin.configs, {
+  recommended: createConfig('recommended', recommendedRules),
+  strict: createConfig('strict', strictRules),
+  stylistic: createConfig('stylistic', stylisticRules),
+  all: createConfig('all', { ...strictRules, ...stylisticRules }),
+});
+
+export default plugin;
 /**
  * why `satisfies`?
  * @see https://github.com/marcalexiei/eslint-zod/issues/49

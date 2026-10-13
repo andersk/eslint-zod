@@ -8,6 +8,7 @@ import {
   getRuleDocReferences,
   getRuleFileNames,
 } from '@eslint-zod/tooling/vitest/spec-helpers';
+import { Linter } from 'eslint';
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import plugin from './index.js';
@@ -71,5 +72,36 @@ describe('recommended config', () => {
     }>();
 
     expect(1).toBe(1);
+  });
+});
+
+describe('config usage', () => {
+  it.each(['file.mts', 'file.cts'])('lints %s files', (filename) => {
+    const messages = new Linter().verify(
+      "import core from 'zod/v4/core';\n",
+      [plugin.configs.recommended],
+      filename,
+    );
+    expect(messages.map((message) => message.ruleId)).toContain('zod-core/consistent-import');
+  });
+
+  it('lets the exported plugin be registered again', () => {
+    const messages = new Linter().verify(
+      "import * as core from 'zod/v4/core';\nexport const ok = core.safeParse(Schema, data).success;\n",
+      [
+        plugin.configs.recommended,
+        { plugins: { 'zod-core': plugin }, rules: { 'zod-core/prefer-validate': 'error' } },
+      ],
+      'file.js',
+    );
+    expect(
+      messages
+        .filter((message) => message.ruleId === 'zod-core/prefer-validate')
+        .map((message) => message.line),
+    ).toEqual([2]);
+  });
+
+  it('registers the plugin object that is exported', () => {
+    expect(plugin.configs.recommended.plugins?.['zod-core']).toBe(plugin);
   });
 });

@@ -9,6 +9,7 @@ import {
   getRuleDocReferences,
   getRuleFileNames,
 } from '@eslint-zod/tooling/vitest/spec-helpers';
+import { Linter } from 'eslint';
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import plugin from './index.js';
@@ -109,5 +110,41 @@ describe('config composition', () => {
     }>();
 
     expect(1).toBe(1);
+  });
+});
+
+describe('config usage', () => {
+  it.each(['file.mts', 'file.cts'])('lints %s files', (filename) => {
+    const messages = new Linter().verify(
+      "import * as z from 'zod/mini';\nexport const userSchema = z.any();\n",
+      [plugin.configs.recommended],
+      filename,
+    );
+    expect(messages.map((message) => message.ruleId)).toContain('zod-mini/no-any-schema');
+  });
+
+  it('lets the exported plugin be registered again', () => {
+    const messages = new Linter().verify(
+      "import * as z from 'zod/mini';\nexport const user = z.string();\n",
+      [
+        plugin.configs.recommended,
+        {
+          plugins: { 'zod-mini': plugin },
+          rules: { 'zod-mini/consistent-schema-var-name': ['error', { after: '_schema' }] },
+        },
+      ],
+      'file.js',
+    );
+    expect(
+      messages
+        .filter((message) => message.ruleId === 'zod-mini/consistent-schema-var-name')
+        .map((message) => message.message),
+    ).toEqual(['Rename this Zod Mini schema to "user_schema"']);
+  });
+
+  it('registers the plugin object that is exported', () => {
+    for (const configName of CONFIG_NAMES) {
+      expect(plugin.configs[configName].plugins?.['zod-mini']).toBe(plugin);
+    }
   });
 });
