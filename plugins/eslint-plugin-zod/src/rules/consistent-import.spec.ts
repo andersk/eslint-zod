@@ -1,14 +1,15 @@
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
-import * as eslint from 'eslint';
+import type { Rule as ESLintRule } from 'eslint';
+import { RuleTester as ESLintRuleTester } from 'eslint';
 
 import { consistentImport } from './consistent-import.js';
 
 const ruleTester = new RuleTester();
 
-// @typescript-eslint/rule-tester wraps the parser to produce a TypeScript AST,
-// hiding plain JS parser issues; use the upstream ESLint tester for those.
-const jsRuleTester = new eslint.RuleTester();
+// @typescript-eslint/rule-tester wraps the parser to produce a TypeScript AST.
+// Use the ESLint tester to catch plain JS parser issues.
+const jsRuleTester = new ESLintRuleTester();
 
 ruleTester.run(`${consistentImport.name} namespace`, consistentImport, {
   valid: [
@@ -485,7 +486,7 @@ ruleTester.run(`${consistentImport.name} named`, consistentImport, {
 
 jsRuleTester.run(
   `${consistentImport.name} plain JS`,
-  consistentImport as unknown as eslint.JSRuleDefinition<eslint.JSRuleDefinitionTypeOptions>,
+  consistentImport as unknown as ESLintRule.RuleModule,
   {
     valid: [
       {
