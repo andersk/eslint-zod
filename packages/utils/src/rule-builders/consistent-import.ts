@@ -40,7 +40,7 @@ export function buildConsistentImportCreate(
           nodes: [],
         };
 
-        if (importGroups[source.value].hasOnlyTypeImports && importKind === 'value') {
+        if (importGroups[source.value].hasOnlyTypeImports && importKind !== 'type') {
           importGroups[source.value].hasOnlyTypeImports = false;
         }
 
